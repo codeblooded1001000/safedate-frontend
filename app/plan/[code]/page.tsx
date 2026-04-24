@@ -12,6 +12,7 @@ import { SafetyPanel } from '@/components/SafetyPanel';
 import { SessionHeader } from '@/components/SessionHeader';
 import { MatchCelebration } from '@/components/MatchCelebration';
 import { api } from '@/lib/api';
+import { buildCalendarFileName, buildIcsEvent, downloadCalendarIcs } from '@/lib/calendar';
 import { categoryEmoji } from '@/lib/utils';
 
 type Stage = 'join' | 'preferences' | 'waiting' | 'venues' | 'confirmed';
@@ -36,6 +37,12 @@ export default function PlanPage() {
   const [joinLoading, setJoinLoading] = useState(false);
   const [joinError, setJoinError] = useState('');
   const [otherUserLeft, setOtherUserLeft] = useState(false);
+  const [calendarDateTime, setCalendarDateTime] = useState('');
+  const [isSavingDateTime, setIsSavingDateTime] = useState(false);
+  const [calendarError, setCalendarError] = useState('');
+  const otherUserHasSubmittedPreferences =
+    !!userType &&
+    !!session?.preferences?.some((p: any) => p.userType !== userType.toUpperCase());
 
   // Socket event listeners
   useEffect(() => {
@@ -116,6 +123,63 @@ export default function PlanPage() {
       setJoinError(err.response?.data?.message || 'Failed to join session');
     } finally {
       setJoinLoading(false);
+    }
+  }
+
+  function handleAddToCalendar() {
+    if (!session?.selectedVenue || !calendarDateTime) return;
+    const ics = buildIcsEvent({
+      sessionCode: code,
+      startDateTime: calendarDateTime,
+      venue: {
+        name: session.selectedVenue.name,
+        address: session.selectedVenue.address,
+        phoneNumber: session.selectedVenue.phoneNumber,
+      },
+    });
+    const fileName = buildCalendarFileName(session.selectedVenue.name);
+    downloadCalendarIcs(ics, fileName);
+  }
+
+  useEffect(() => {
+    if (!session?.dateTime) return;
+    const d = new Date(session.dateTime);
+    if (Number.isNaN(d.getTime())) return;
+    const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+      .toISOString()
+      .slice(0, 16);
+    setCalendarDateTime(local);
+  }, [session?.dateTime]);
+
+  async function handleSaveDateTimeAndAdd() {
+    if (!session?.selectedVenue || !calendarDateTime || !userType) {
+      setCalendarError('Please choose date and time first.');
+      return;
+    }
+    setCalendarError('');
+    setIsSavingDateTime(true);
+    try {
+      const isoDateTime = new Date(calendarDateTime).toISOString();
+      await api.updateDateTime(code, {
+        dateTime: isoDateTime,
+        userType: userType?.toUpperCase() as 'CREATOR' | 'PARTNER',
+      });
+      await refetch();
+      const ics = buildIcsEvent({
+        sessionCode: code,
+        startDateTime: isoDateTime,
+        venue: {
+          name: session.selectedVenue.name,
+          address: session.selectedVenue.address,
+          phoneNumber: session.selectedVenue.phoneNumber,
+        },
+      });
+      const fileName = buildCalendarFileName(session.selectedVenue.name);
+      downloadCalendarIcs(ics, fileName);
+    } catch (err: any) {
+      setCalendarError(err?.response?.data?.message || 'Could not save date/time. Please try again.');
+    } finally {
+      setIsSavingDateTime(false);
     }
   }
 
@@ -280,17 +344,31 @@ export default function PlanPage() {
 
         {/* Preferences stage */}
         {stage === 'preferences' && userType && (
-          <PreferenceForm
-            sessionCode={code}
-            userType={userType}
-            onSubmit={() => {
-              const otherPref = session.preferences?.find(
-                (p: any) => p.userType !== userType.toUpperCase(),
-              );
-              setStage(otherPref ? 'venues' : 'waiting');
-              refetch();
-            }}
-          />
+          <>
+            {otherUserHasSubmittedPreferences && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-4 px-4 py-3 rounded-xl"
+                style={{ background: 'rgba(17,153,142,0.15)', border: '1px solid rgba(17,153,142,0.3)' }}
+              >
+                <p className="text-sm font-medium" style={{ color: '#6ee7b7' }}>
+                  {userType === 'creator' ? (session.partnerName || 'Your date') : session.creatorName} has submitted preferences. Finish yours to unlock venues.
+                </p>
+              </motion.div>
+            )}
+            <PreferenceForm
+              sessionCode={code}
+              userType={userType}
+              onSubmit={() => {
+                const otherPref = session.preferences?.find(
+                  (p: any) => p.userType !== userType.toUpperCase(),
+                );
+                setStage(otherPref ? 'venues' : 'waiting');
+                refetch();
+              }}
+            />
+          </>
         )}
 
         {/* Waiting stage */}
@@ -383,6 +461,53 @@ export default function PlanPage() {
                 Call venue
               </a>
             )}
+
+            <div className="mt-3 p-4 rounded-2xl text-left" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <label className="block text-sm font-medium mb-2" style={{ color: 'rgba(255,255,255,0.8)' }}>
+                Pick date & time
+              </label>
+              <input
+                type="datetime-local"
+                value={calendarDateTime}
+                onChange={(e) => setCalendarDateTime(e.target.value)}
+                className="input-field w-full mb-3"
+              />
+              {calendarError && (
+                <div
+                  className="mb-3 px-3 py-2 rounded-lg text-sm"
+                  style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', color: '#fca5a5' }}
+                >
+                  {calendarError}
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={handleSaveDateTimeAndAdd}
+                disabled={isSavingDateTime}
+                className="w-full py-3 rounded-xl font-semibold text-center transition-all disabled:opacity-60"
+                style={{
+                  background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                  color: 'white',
+                  boxShadow: '0 6px 24px rgba(102,126,234,0.28)',
+                }}
+              >
+                {isSavingDateTime ? 'Saving...' : 'Save & Add to Calendar'}
+              </button>
+              {session.dateTime && (
+                <button
+                  type="button"
+                  onClick={handleAddToCalendar}
+                  className="w-full mt-2 py-2.5 rounded-xl font-medium text-center transition-all"
+                  style={{
+                    background: 'rgba(255,255,255,0.08)',
+                    color: 'rgba(255,255,255,0.9)',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                  }}
+                >
+                  Add current saved time to calendar
+                </button>
+              )}
+            </div>
           </motion.div>
         )}
 

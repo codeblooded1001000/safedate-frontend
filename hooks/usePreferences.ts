@@ -3,6 +3,9 @@
 import { useState } from 'react';
 import { api } from '@/lib/api';
 
+const ANYTHING_WORKS_VIBE = 'ANYTHING_WORKS';
+const MAX_VIBE_SELECTIONS = 2;
+
 const DEFAULT_PREFERENCES = {
   latitude: 0,
   longitude: 0,
@@ -26,12 +29,26 @@ export function usePreferences(sessionCode: string, userType: string) {
   }
 
   function toggleVibe(vibe: string) {
-    setPreferences((prev) => ({
-      ...prev,
-      vibes: prev.vibes.includes(vibe)
-        ? prev.vibes.filter((v) => v !== vibe)
-        : [...prev.vibes, vibe],
-    }));
+    setPreferences((prev) => {
+      if (vibe === ANYTHING_WORKS_VIBE) {
+        setError('');
+        return { ...prev, vibes: [ANYTHING_WORKS_VIBE] };
+      }
+
+      const concreteVibes = prev.vibes.filter((v) => v !== ANYTHING_WORKS_VIBE);
+      if (concreteVibes.includes(vibe)) {
+        setError('');
+        return { ...prev, vibes: concreteVibes.filter((v) => v !== vibe) };
+      }
+
+      if (concreteVibes.length >= MAX_VIBE_SELECTIONS) {
+        setError('You can choose up to 2 vibes, or select "Anything works".');
+        return prev;
+      }
+
+      setError('');
+      return { ...prev, vibes: [...concreteVibes, vibe] };
+    });
   }
 
   async function submitPreferences() {
@@ -48,9 +65,13 @@ export function usePreferences(sessionCode: string, userType: string) {
     setError('');
 
     try {
+      const selectedVibes = preferences.vibes.includes(ANYTHING_WORKS_VIBE)
+        ? []
+        : preferences.vibes;
       await api.submitPreferences(sessionCode, {
         userType,
         ...preferences,
+        vibes: selectedVibes,
       });
       return true;
     } catch (err: any) {

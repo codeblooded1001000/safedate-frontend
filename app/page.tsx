@@ -88,7 +88,7 @@ export default function LandingPage() {
           <p className="text-lg mb-10 max-w-md mx-auto leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>
             Share a link. Pick a spot together.
             <br />
-            Stay safe with built-in check-ins.
+            Safety tools coming soon.
           </p>
 
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
@@ -119,7 +119,7 @@ export default function LandingPage() {
           {[
             { icon: '🎯', label: 'Midpoint matching' },
             { icon: '✅', label: 'Verified venues' },
-            { icon: '🛡️', label: 'Safety check-ins' },
+            { icon: '🛡️', label: 'Safety check-ins (Coming soon)' },
             { icon: '💜', label: 'Both decide together' },
           ].map((feature, i) => (
             <motion.div
@@ -156,7 +156,7 @@ export default function LandingPage() {
               { step: 1, emoji: '🔗', title: 'Share a link', desc: 'Send to your date via any app' },
               { step: 2, emoji: '🎯', title: 'Both pick preferences', desc: 'Location, vibe, budget' },
               { step: 3, emoji: '💜', title: 'Suggest spots', desc: 'Match on a place together' },
-              { step: 4, emoji: '🛡️', title: 'Stay safe', desc: 'Share location with a trusted friend' },
+              { step: 4, emoji: '🛡️', title: 'Stay safe (Coming soon)', desc: 'Safety tools will be available soon' },
             ].map((item, i) => (
               <motion.div
                 key={item.step}
@@ -198,9 +198,9 @@ export default function LandingPage() {
           }}
         >
           <div className="text-4xl mb-4">🛡️</div>
-          <h2 className="text-2xl font-bold text-white mb-3">Safety built in</h2>
+          <h2 className="text-2xl font-bold text-white mb-3">Safety features (Coming soon)</h2>
           <p className="mb-6 max-w-md mx-auto" style={{ color: 'rgba(255,255,255,0.7)' }}>
-            Add a trusted contact who gets notified when your date starts. Automatic check-ins and one-tap SOS.
+            Safety contacts, check-ins, SOS, and live location are planned and coming soon.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             {['Safety contacts', 'Periodic check-ins', 'One-tap SOS', 'Location sharing'].map((f) => (

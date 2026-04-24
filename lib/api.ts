@@ -1,6 +1,7 @@
 import axios from 'axios';
+import { getPublicApiUrl } from './runtime-config';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_URL = getPublicApiUrl();
 
 const client = axios.create({
   baseURL: API_URL,
@@ -26,6 +27,14 @@ export const api = {
 
   selectVenue: async (code: string, data: { venueId: string; dateTime?: string }) => {
     const res = await client.patch(`/api/sessions/${code}/select-venue`, data);
+    return res.data;
+  },
+
+  updateDateTime: async (
+    code: string,
+    data: { dateTime: string; userType: 'CREATOR' | 'PARTNER' },
+  ) => {
+    const res = await client.patch(`/api/sessions/${code}/date-time`, data);
     return res.data;
   },
 

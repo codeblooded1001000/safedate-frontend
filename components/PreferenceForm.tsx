@@ -9,6 +9,7 @@ const VIBES = [
   { id: 'RESTAURANT', emoji: '🍽️', label: 'Restaurant', gradient: 'from-rose-500 to-pink-500' },
   { id: 'BAR', emoji: '🍸', label: 'Bar', gradient: 'from-purple-500 to-indigo-500' },
   { id: 'ACTIVITY', emoji: '🎯', label: 'Activity', gradient: 'from-teal-500 to-emerald-500' },
+  { id: 'ANYTHING_WORKS', emoji: '🤝', label: 'Anything works', gradient: 'from-slate-500 to-slate-700' },
 ];
 
 const TIME_SLOTS = [
@@ -90,7 +91,9 @@ export function PreferenceForm({ sessionCode, userType, onSubmit }: PreferenceFo
         <h3 className="text-lg font-semibold text-white mb-1 flex items-center gap-2">
           <span>✨</span> What&apos;s the vibe?
         </h3>
-        <p className="text-sm mb-4" style={{ color: 'rgba(255,255,255,0.5)' }}>Select all that work for you</p>
+        <p className="text-sm mb-4" style={{ color: 'rgba(255,255,255,0.5)' }}>
+          Pick up to 2 vibes, or choose &quot;Anything works&quot;
+        </p>
 
         <div className="grid grid-cols-2 gap-3">
           {VIBES.map((vibe, i) => {
