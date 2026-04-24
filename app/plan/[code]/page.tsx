@@ -23,13 +23,22 @@ export default function PlanPage() {
   const searchParams = useSearchParams();
   const roleParam = searchParams.get('role');
 
-  const { session, isLoading, error, refetch } = useSession(code);
-
   const [stage, setStage] = useState<Stage>('join');
   const [matchedVenue, setMatchedVenue] = useState<any | null>(null);
   const [userType, setUserType] = useState<'creator' | 'partner' | null>(
     roleParam === 'creator' ? 'creator' : null,
   );
+
+  const touchAs: 'CREATOR' | 'PARTNER' | null =
+    userType === 'creator'
+      ? 'CREATOR'
+      : userType === 'partner'
+        ? 'PARTNER'
+        : roleParam === 'creator'
+          ? 'CREATOR'
+          : null;
+
+  const { session, isLoading, error, refetch } = useSession(code, touchAs);
 
   const { socket, isConnected } = useSocket(code, userType);
   const [partnerName, setPartnerName] = useState('');
@@ -65,6 +74,9 @@ export default function PlanPage() {
     const onUserJoined = (data: any) => {
       if (data.userType?.toLowerCase() !== userType) setOtherUserLeft(false);
     };
+    const onSessionExpired = () => {
+      refetch();
+    };
 
     socket.on('partnerJoined', onPartnerJoined);
     socket.on('preferencesUpdated', onPreferencesUpdated);
@@ -73,6 +85,7 @@ export default function PlanPage() {
     socket.on('venueMatched', onVenueMatchedSocket);
     socket.on('userLeft', onUserLeft);
     socket.on('userJoined', onUserJoined);
+    socket.on('sessionExpired', onSessionExpired);
 
     return () => {
       socket.off('partnerJoined', onPartnerJoined);
@@ -82,6 +95,7 @@ export default function PlanPage() {
       socket.off('venueMatched', onVenueMatchedSocket);
       socket.off('userLeft', onUserLeft);
       socket.off('userJoined', onUserJoined);
+      socket.off('sessionExpired', onSessionExpired);
     };
   }, [socket, refetch]);
 

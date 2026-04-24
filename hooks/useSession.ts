@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '@/lib/api';
 
-export function useSession(code: string) {
+export function useSession(code: string, touchAs?: 'CREATOR' | 'PARTNER' | null) {
   const [session, setSession] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -11,7 +11,7 @@ export function useSession(code: string) {
   const fetchSession = useCallback(async () => {
     if (!code) return;
     try {
-      const data = await api.getSession(code);
+      const data = await api.getSession(code, touchAs ? { as: touchAs } : undefined);
       setSession(data);
       setError(null);
     } catch (err: any) {
@@ -19,7 +19,7 @@ export function useSession(code: string) {
     } finally {
       setIsLoading(false);
     }
-  }, [code]);
+  }, [code, touchAs]);
 
   useEffect(() => {
     fetchSession();

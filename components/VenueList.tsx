@@ -33,14 +33,16 @@ export function VenueList({ sessionCode, userType, preferences, onVenueSelected,
   const loadVenues = useCallback(async (silent = false) => {
     if (!silent) setIsLoading(true);
     try {
-      const data = await api.getVenues(sessionCode);
+      const as =
+        userType === 'creator' ? 'CREATOR' : userType === 'partner' ? 'PARTNER' : undefined;
+      const data = await api.getVenues(sessionCode, as ? { as } : undefined);
       setVenues(data);
     } catch (err: any) {
       if (!silent) setError(err.response?.data?.message || 'Failed to load venues');
     } finally {
       if (!silent) setIsLoading(false);
     }
-  }, [sessionCode]);
+  }, [sessionCode, userType]);
 
   useEffect(() => {
     loadVenues();

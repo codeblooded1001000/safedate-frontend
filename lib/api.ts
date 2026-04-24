@@ -15,8 +15,10 @@ export const api = {
     return res.data;
   },
 
-  getSession: async (code: string) => {
-    const res = await client.get(`/api/sessions/${code}`);
+  getSession: async (code: string, opts?: { as?: 'CREATOR' | 'PARTNER' }) => {
+    const res = await client.get(`/api/sessions/${code}`, {
+      params: opts?.as ? { as: opts.as } : undefined,
+    });
     return res.data;
   },
 
@@ -62,8 +64,10 @@ export const api = {
   },
 
   // Venues
-  getVenues: async (code: string) => {
-    const res = await client.get(`/api/sessions/${code}/venues`);
+  getVenues: async (code: string, opts?: { as?: 'CREATOR' | 'PARTNER' }) => {
+    const res = await client.get(`/api/sessions/${code}/venues`, {
+      params: opts?.as ? { as: opts.as } : undefined,
+    });
     return res.data;
   },
 

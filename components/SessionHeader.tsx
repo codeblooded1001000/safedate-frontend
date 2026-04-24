@@ -1,5 +1,6 @@
 'use client';
 
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
@@ -11,10 +12,25 @@ interface SessionHeaderProps {
 
 export function SessionHeader({ session, userType, isConnected }: SessionHeaderProps) {
   const shareUrl = typeof window !== 'undefined' ? window.location.href.split('?')[0] : '';
+  const [linkCopied, setLinkCopied] = useState(false);
+  const copyResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  async function copyLink() {
-    await navigator.clipboard.writeText(shareUrl);
-  }
+  useEffect(() => {
+    return () => {
+      if (copyResetRef.current) clearTimeout(copyResetRef.current);
+    };
+  }, []);
+
+  const copyLink = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setLinkCopied(true);
+      if (copyResetRef.current) clearTimeout(copyResetRef.current);
+      copyResetRef.current = setTimeout(() => setLinkCopied(false), 2500);
+    } catch {
+      setLinkCopied(false);
+    }
+  }, [shareUrl]);
 
   return (
     <header className="sticky top-0 z-10" style={{ background: 'rgba(15,15,26,0.85)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
@@ -51,15 +67,23 @@ export function SessionHeader({ session, userType, isConnected }: SessionHeaderP
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col items-end gap-1">
           {session && !session.partnerName && (
-            <button
-              onClick={copyLink}
-              className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
-              style={{ background: 'rgba(255,107,107,0.15)', color: '#FF8E53', border: '1px solid rgba(255,107,107,0.2)' }}
-            >
-              Copy Link
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={copyLink}
+                className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+                style={{ background: 'rgba(255,107,107,0.15)', color: '#FF8E53', border: '1px solid rgba(255,107,107,0.2)' }}
+              >
+                Copy Link
+              </button>
+              {linkCopied && (
+                <span className="text-xs font-medium" style={{ color: '#38ef7d' }}>
+                  Link copied to clipboard
+                </span>
+              )}
+            </>
           )}
         </div>
       </div>

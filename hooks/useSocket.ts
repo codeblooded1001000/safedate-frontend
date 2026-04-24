@@ -37,5 +37,15 @@ export function useSocket(sessionCode: string, userType?: 'creator' | 'partner' 
     };
   }, [sessionCode, userType]);
 
+  useEffect(() => {
+    if (!socket || !userType) return;
+    const role = userType.toUpperCase() as 'CREATOR' | 'PARTNER';
+    const intervalMs = 3 * 60 * 1000;
+    const id = setInterval(() => {
+      socket.emit('activityPing', { sessionCode, userType: role });
+    }, intervalMs);
+    return () => clearInterval(id);
+  }, [socket, userType, sessionCode]);
+
   return { socket, isConnected };
 }
